@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         resultTextView=(TextView)findViewById(R.id.result);
     }
 
+
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         resultTextView.setText(sb.toString());
                     }else{
                         showMessage("请选择性别！");
-                    }                        showMessage("请选择性别！");
+                    }
 
                 }else{
                     showMessage("请输入体重！");
