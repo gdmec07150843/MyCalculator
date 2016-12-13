@@ -1,125 +1,111 @@
 package cn.edu.gdmec.s07150843.mycalculator;
 
-import android.content.SharedPreferences;
-import android.os.Bundle;
-import android.os.Environment;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 
 public class MainActivity extends AppCompatActivity {
-
-    private EditText et1, et2;
-    private TextView tv1;
-
+    private Button calculatorButton;
+    private EditText weightEdittext;
+    private RadioButton manRadioButton;
+    private RadioButton womanRadioButton;
+    private TextView resultTextView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        et1 = (EditText) findViewById(R.id.edittext1);
-        et2 = (EditText) findViewById(R.id.edittext2);
-        tv1 = (TextView) findViewById(R.id.textview);
+        //获取 UI 控件实例
+        calculatorButton=(Button)findViewById(R.id.calculate);
+        weightEdittext=(EditText)findViewById(R.id.weight);
+        manRadioButton=(RadioButton)findViewById(R.id.man);
+        womanRadioButton=(RadioButton)findViewById(R.id.woman);
+        resultTextView=(TextView)findViewById(R.id.result);
     }
-
-    public void spWrite(View v) {
-        SharedPreferences user = getSharedPreferences("user",MODE_APPEND);
-        SharedPreferences.Editor editor = user.edit();
-        editor.putString("account", et1.getText().toString());
-        editor.putString("pass", et2.getText().toString());
-        editor.commit();
-        Toast.makeText(this, "SharedPreferences写入成功", Toast.LENGTH_LONG ).show();
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerEvent();
     }
-
-    public void spRead(View v) {
-        SharedPreferences user = getSharedPreferences("user", MODE_APPEND);
-        String acount = user.getString("account", "木有这个键值");
-        String pass = user.getString("pass", "木有这个键值");
-        tv1.setText("账号" + acount + "\n" + "密码" + pass);
-        Toast.makeText(this, "SharedPreferences读取成功", Toast.LENGTH_LONG).show();
-    }
-
-    public void ROMWrite(View v) {
-        String account = et1.getText().toString();
-        String pass = et2.getText().toString();
-
-        try {
-            FileOutputStream fos = openFileOutput("user.txt", MODE_APPEND);
-            OutputStreamWriter osw = new OutputStreamWriter(fos);
-            BufferedWriter bw = new BufferedWriter(osw);
-            bw.write(account + ":" + pass);
-            bw.flush();
-            fos.close();
-            Toast.makeText(this, "ROM写入成功", Toast.LENGTH_SHORT).show();
-
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void ROMRead(View v) {
-        String acount = et1.getText().toString();
-        String pass = et2.getText().toString();
-
-        try {
-            FileInputStream fis = openFileInput("user.txt");
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuffer sb = new StringBuffer();
-            String s;
-            while ((s = br.readLine()) != null) {
-                sb.append(s + "\n");
+    private void registerEvent(){
+        calculatorButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                //判断是否输入体重
+                if (!weightEdittext.getText().toString().trim().equals("")){
+                    //判断是否选择性别
+                    if (manRadioButton.isChecked()||womanRadioButton.isChecked()){
+                        Double weight=Double.parseDouble(weightEdittext.getText().toString());
+                        StringBuffer sb=new StringBuffer();
+                        sb.append("----------结果----------\n");
+                        if (manRadioButton.isChecked()){
+                            sb.append("男性标准身高");
+                            // 计算
+                            double result=evaluateHeight(weight,"男");
+                            sb.append((int)result+"厘米");
+                        }else{
+                            sb.append("女性标准身高");
+                            double result=evaluateHeight(weight,"女");
+                            sb.append((int)result+"厘米");
+                        }
+                        //显示结果
+                        resultTextView.setText(sb.toString());
+                    }else {
+                        showMessage("请选择性别");
+                    }
+                }else {
+                    showMessage("请输入体重");
+                }
             }
-            fis.close();
-            tv1.setText(sb);
-            Toast.makeText(this, "ROM读取成功", Toast.LENGTH_LONG).show();
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
+    //消息提示对话框
+    private void showMessage(String message){
+        AlertDialog alert=new AlertDialog.Builder(this).create();
+        alert.setTitle("系统信息");
+        alert.setMessage(message);
+        alert.setButton(DialogInterface.BUTTON_POSITIVE,"确定",new DialogInterface.OnClickListener(){
 
-    public void SDWrite(View v) {
-        String str = et1.getText().toString() + ":" + et2.getText().toString();
-        String sdCardRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String filename = sdCardRoot + "/test.txt";
-        File file = new File(filename);
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
 
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(str.getBytes());
-            fos.flush();
-            fos.close();
-            Toast.makeText(this, "SD卡写入成功", Toast.LENGTH_LONG).show();
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
+            }
+        });
+        alert.show();
     }
-    public void SDRead(View v) {
-        String sdCardRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String filename=sdCardRoot+"/test.txt";
-        File file=new File(filename);
-        int length=(int)file.length();
-        byte[] b=new byte[length];
-
-        try {
-            FileInputStream fis=new FileInputStream(file);
-            fis.read(b,0,length);
-            fis.close();
-            tv1.setText(new String(b));
-            Toast.makeText(this, "SD卡读取成功", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            e.printStackTrace();
+    //计算标准身高体重
+    private double evaluateHeight(double weight,String sex){
+        double height;
+        if (sex=="男"){
+            height=170-(62-weight)/0.6;
+        }else {
+            height=158-(52-weight)/0.5;
         }
+        return height;
+    }
+    //创建选项菜单
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0,1,0,"退出");
+        return super.onCreateOptionsMenu(menu);
+    }
+    //菜单事件处理
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case 1:
+                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
-
